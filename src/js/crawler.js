@@ -19,50 +19,58 @@
  *   ./custom-post-importer.
  */
 
-$(document).ready(function() {
+document.addEventListener('DOMContentLoaded', () => {
+	/**
+	 * The selector for the page content
+	 *
+	 * @type {string}
+	 */
+	const PAGE_SELECTOR = '.body-container';
 
-	var PAGE_SELECTOR = "#content";
+	/**
+	 * Selector for the title
+	 *
+	 * @type {string}
+	 */
+	const TITLE_SELECTOR = '.body-container .hs_cos_wrapper_type_rich_text h1';
 
-	var TITLE_SELECTOR = "#ctl00_mainContent_pageTitle";
-	var CONTENT_SELECTOR = "#ctl00_mainContent_pageContent";
+	/**
+	 * Selector for all of the content, can be one or more sections.
+	 * @type {string}
+	 */
+	const CONTENT_SELECTOR = '.body-container .hs_cos_wrapper_type_rich_text';
 
-	var files = $('#file-collection .file');
+	/**
+	 * List of files in the page
+	 *
+	 * @type {NodeListOf<Element>}
+	 */
+	const files = document.querySelectorAll('#file-collection .file');
 
 
 	/**
 	 * MAIN FUNCTIONS
 	 */
 
-	var JSONify = function (url, page) {
-
-
+	let JSONify = function (url, page) {
 		try {
-
-			result = $('#imported-content').load(url, function (responseText, textStatus, jqXHR) {
-
+			$('#imported-content').load(url, function (responseText, textStatus, jqXHR) {
 				if (textStatus === 'success') {
 					// console.log('Processing ' + url);
 					processData(page);
-
 				} else {
 					console.log('Could not load ' + url);
-					files.eq(page.page_num + 1).trigger('JSONify');
-
-				};
-
+					$(files).eq(page.page_num + 1).trigger('JSONify');
+				}
 			});
-
 		} catch(e) {
 			console.log('Issue loading ' + url);
-			error.log(e)
-
+			console.log(e)
 		}
-
 	};
 
 
-	var processData = function(page) {
-
+	let processData = function(page) {
 		page.title = extractTitle();
 		page.content = extractContent();
 		page.attachments = extractAttachments();
@@ -73,15 +81,13 @@ $(document).ready(function() {
 		// page.featured_image = extractFeaturedImage();
 
 		exportData(page);
-
 	};
 
 
-	var exportData = function(page) {
+	let exportData = function(page) {
+		let my_JSON = JSON.stringify(page);
 
-		var my_JSON = JSON.stringify(page);
-
-		var my_AJAX = $.ajax({
+		$.ajax({
 			type: 'POST',
 			url: 'json-to-file.php',
 			data: {json: '"' + page.page_num + '"' + ':' + my_JSON + ','},
@@ -90,8 +96,7 @@ $(document).ready(function() {
 
 		if (page.page_num+1 < files.length) {
 			files.eq(page.page_num+1).trigger('JSONify');
-		};
-
+		}
 	};
 
 
@@ -100,24 +105,27 @@ $(document).ready(function() {
 	 * EXTRACTION FUNCTIONS
 	 */
 
-	var extractTitle = function() {
-		var title = '';
+	let extractTitle = function() {
+		let title = '';
 
 		try {
-			title = $(TITLE_SELECTOR).text().trim();
-
-		} finally {
-			return title;
+			title = document.querySelector(TITLE_SELECTOR).innerText.trim();
+		} catch {
 
 		}
+
+		return title;
 	};
 
-	var extractContent = function () {
-		var content = '';
+	let extractContent = function () {
+		let content = '';
 
 		try {
-			content = $(CONTENT_SELECTOR).html().trim();
-			// // Eff you, MS Word.
+			let allContent = document.querySelectorAll(CONTENT_SELECTOR);
+
+			allContent.forEach(element => content += element.innerHTML.trim());
+
+			// Making sure that imports from MS Word do not cause issues due to ASCII limitations.
 			content = content.replace(/[\u2018\u2019\u201A]/g, "\'");
 			content = content.replace(/[\u201C\u201D\u201E]/g, "\"");
 			content = content.replace(/\u2026/g, "...");
@@ -127,62 +135,68 @@ $(document).ready(function() {
 			content = content.replace(/\u203A/g, ">");
 			content = content.replace(/[\u02DC\u00A0]/g, " ");
 			content = content.replace(/[^ -~]/g, '');
-
-		} finally {
-			return content;
-
+		} catch {
+			console.log('Error in extracting content');
 		}
+
+		return content;
 	};
 
-	var extractAttachments = function () {
-		var attachments = [];
+	let extractAttachments = function () {
+		let attachments = [];
 
 		try {
 			// Find downloadable files
-			$('#content a').each(function () {
-				let href = $(this).attr('href');
+			document.querySelectorAll('.body-container a').forEach(function (element) {
+				let href = element.getAttribute('href');
 				if (href.indexOf('doc.aspx') === 0) {
-					var file = {
+					let file = {
 						'link': href,
 						'title': $(this).text()
 					}
+
 					attachments.push(file);
 				}
 			});
-			$('#content img').each(function () {
-				let src = $(this).attr('src');
+			document.querySelectorAll('.body-container img').forEach(function (element) {
+				let src = element.getAttribute('src');
+
 				if (src.indexOf('image.aspx') === 0) {
-					var image = {
+					let image = {
 						'link': src,
-						'title': $(this).attr('title') ? $(this).attr('title') : ''
+						'title': element.getAttribute('title') || ''
 					}
+
 					attachments.push(image);
 				}
 			});
 
 		} finally {
 			console.log(attachments);
-			return attachments;
 		}
+
+		return attachments;
 	}
 
-	var extractAuthor = function() {
-		var author = '';
+	let extractAuthor = function () {
+		let author = '';
 
 		try {
-			author = $('#content .documentByLine a').text().trim() || $('#content .documentByLine').text().split('by')[1].trim();
+			author = document.querySelectorAll('.body-container .documentByLine a').innerText.trim()
+				|| document.querySelector('.body-container .documentByLine').innerText.split('by')[1].trim();
 
 		} finally {
-			return author;
-
+			// TODO: Change this to a catch
 		}
+
+		return author;
 	};
 
-	var extractAuthorSlug = function() {
-		var author_slug = '';
+	let extractAuthorSlug = function () {
+		let author_slug = '';
 
 		try {
-			author_url_bits = $('#content .documentByLine a').attr('href').split('/');
+			author_url_bits = $('.body-container .documentByLine a').attr('href').split('/');
 			author_slug = author_url_bits[author_url_bits.length-1];
 
 		} finally {
@@ -195,7 +209,7 @@ $(document).ready(function() {
 		var date = '';
 
 		try {
-			date_string = $('#content .documentByLine').text().split('by')[0].trim();
+			date_string = $('.body-container .documentByLine').text().split('by')[0].trim();
 			date = new Date(date_string);
 
 		} finally {
@@ -209,7 +223,7 @@ $(document).ready(function() {
 
 		try {
 			// attribute is ../image-mini. We want ../image, hence the slice.
-			image = $('#content .newsImageContainer img').attr('src').slice(0,-5);
+			image = $('.body-container .newsImageContainer img').attr('src').slice(0,-5);
 
 		} finally {
 			return image;
@@ -227,18 +241,18 @@ $(document).ready(function() {
 	var counter = 0;
 
 	$('#file-collection .file').on('JSONify', function () {
-	 	var this_page = {
-	 		page_num		: counter,
-	 		page_slug		: '',
-	 		title			: '',
-	 		author			: '',
-	 		author_slug		: '',
-	 		publish_date	: '',
-	 		featured_image	: '',
-	 		content			: '',
-	 		attachments		: [],
+		var this_page = {
+			page_num		: counter,
+			page_slug		: '',
+			title			: '',
+			author			: '',
+			author_slug		: '',
+			publish_date	: '',
+			featured_image	: '',
+			content			: '',
+			attachments		: [],
 			old_url			: $(this).attr('id'),
-	 	};
+		};
 
 		counter ++;
 

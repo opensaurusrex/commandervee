@@ -1,3 +1,6 @@
+.idea
+vendor
+node_modules
 site-urls
 json.txt
 results.json

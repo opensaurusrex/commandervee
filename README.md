@@ -2,19 +2,23 @@
 
 ## What is Commander Vee?
 
-Commander Vee is the result of a two-day sprint to pull over 850 blog posts from an old HTML blog into a shiny new WordPress one. It may not be the easiest, most elegant set of scripts ever. But it **did** save us 45 hours of manual content entry, so there's that!
+Commander Vee is the result of a two-day sprint to pull over 850 blog posts from an old HTML blog into a shiny new 
+WordPress one. It may not be the easiest, most elegant set of scripts ever. But it **did** save us 45 hours of manual 
+content entry, so there's that!
 
 
 ## What can I do with it?
 
-Whatever you want (no, seriously). Commander Vee is not a polished plug-and-play script, but that doesn't mean you can't use it to _inspire_ a polished plug-and-play script!
+Whatever you want (no, seriously). Commander Vee is not a polished plug-and-play script, but that doesn't mean you 
+can't use it to _inspire_ a polished plug-and-play script!
 
 ## How do I do that?
 
 So glad you asked.
 
 ### Getting set up
-In our case, we needed to pull all of these blog posts off of a site with cross-domain security enabled. While it was a big site, it wasn't **big** big, so we pulled down a local copy of all the posts we needed using
+In our case, we needed to pull all of these blog posts off of a site with cross-domain security enabled. While it was a 
+big site, it wasn't **big** big, so we pulled down a local copy of all the posts we needed using
 ```wget -i urls_to_dl.txt```
 
 ### Instructions for crawler.js / crawler.php:
